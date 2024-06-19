@@ -19,17 +19,45 @@ const initializeDatabase = async (req, res) => {
 // Get transactions with search and pagination
 const getTransactions = async (req, res) => {
   const { month, page = 1, perPage = 10, search = '' } = req.query;
-  const monthIndex = new Date(`${month} 1, 2000`).getMonth(); // Convert month to index (0-11)
+
+  if (!month) {
+    return res.status(400).json({ message: 'Month parameter is required' });
+  }
+
+  const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1; // Convert month to index (1-12)
 
   try {
-    const query = {
-      dateOfSale: { $month: monthIndex + 1 }, // Match month regardless of year
-      $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { price: { $regex: search, $options: 'i' } }
-      ]
+    let query = {
+      $expr: {
+        $eq: [{ $month: "$dateOfSale" }, monthIndex] // Match month regardless of year
+      }
     };
+
+    if (search) {
+      const numericSearch = parseFloat(search); // Convert search term to float
+
+      if (!isNaN(numericSearch)) {
+        // If search term is a valid number, search by exact price or approximate price range
+        query.$or = [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          {
+            $expr: {
+              $and: [
+                { $gte: [{ $toDouble: "$price" }, numericSearch - 100] },
+                { $lte: [{ $toDouble: "$price" }, numericSearch + 100] }
+              ]
+            }
+          }
+        ];
+      } else {
+        // If search term is not a valid number, only search by title and description fields
+        query.$or = [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } }
+        ];
+      }
+    }
 
     const transactions = await Transaction.find(query)
       .skip((page - 1) * perPage)
@@ -39,75 +67,135 @@ const getTransactions = async (req, res) => {
 
     res.status(200).json({ transactions, total });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching transactions', error });
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ message: 'Error fetching transactions', error: error.message });
   }
 };
 
 // Get statistics for a given month
-const getStatistics = async (req, res) => {
-  const { month } = req.query;
-  const monthIndex = new Date(`${month} 1, 2000`).getMonth(); // Convert month to index (0-11)
-
-  try {
-    const transactions = await Transaction.find({ dateOfSale: { $month: monthIndex + 1 } });
-
-    const totalSalesAmount = transactions.reduce((sum, transaction) => sum + transaction.price, 0);
-    const soldItems = transactions.filter(transaction => transaction.isSold).length;
-    const notSoldItems = transactions.length - soldItems;
-
-    res.status(200).json({ totalSalesAmount, soldItems, notSoldItems });
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching statistics', error });
-  }
-};
-
+const getStatistics = async (req) => {
+    const { month } = req.query;
+    if (!month) {
+      return { status: 400, data: { message: 'Month parameter is required' } };
+    }
+  
+    const date = new Date(`${month} 1, 2000`);
+    if (isNaN(date.getTime())) {
+      return { status: 400, data: { message: 'Invalid month parameter' } };
+    }
+  
+    const monthIndex = date.getMonth() + 1; // Use date.getMonth() to get month index
+  
+    try {
+      const totalSalesAmount = await Transaction.aggregate([
+        {
+          $match: {
+            $expr: {
+              $eq: [{ $month: '$dateOfSale' }, monthIndex]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalAmount: { $sum: '$price' }
+          }
+        }
+      ]);
+  
+      const totalItemsCount = await Transaction.countDocuments({
+        $expr: {
+          $eq: [{ $month: '$dateOfSale' }, monthIndex]
+        }
+      });
+  
+      const soldItemsCount = await Transaction.countDocuments({
+        $expr: {
+            $eq: [{ $month: '$dateOfSale' }, monthIndex]
+          },
+          sold: true
+      });
+  
+      const notSoldItemsCount = totalItemsCount - soldItemsCount;
+  
+      const statistics = {
+        totalSalesAmount: totalSalesAmount.length > 0 ? totalSalesAmount[0].totalAmount : 0,
+        soldItems: soldItemsCount,
+        notSoldItems: notSoldItemsCount,
+        totalItemsCount: totalItemsCount
+      };
+  
+      return { status: 200, data: statistics };
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+      return { status: 500, data: { message: 'Error fetching statistics', error: error.message } };
+    }
+  };
+  
 // Get bar chart data for a given month
 const getBarChartData = async (req, res) => {
   const { month } = req.query;
-  const monthIndex = new Date(`${month} 1, 2000`).getMonth(); // Convert month to index (0-11)
+
+  if (!month) {
+    return { status: 400, data: { message: 'Month parameter is required' } };
+  }
+
+  const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1; // Convert month to index (1-12)
 
   try {
-    const transactions = await Transaction.find({ dateOfSale: { $month: monthIndex + 1 } });
+    const priceRanges = await Transaction.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: [{ $month: "$dateOfSale" }, monthIndex]
+          }
+        }
+      },
+      {
+        $bucket: {
+          groupBy: "$price",
+          boundaries: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, Infinity],
+          default: "901-above",
+          output: {
+            count: { $sum: 1 }
+          }
+        }
+      }
+    ]);
 
-    const priceRanges = [
-      { range: '0-100', count: 0 },
-      { range: '101-200', count: 0 },
-      { range: '201-300', count: 0 },
-      { range: '301-400', count: 0 },
-      { range: '401-500', count: 0 },
-      { range: '501-600', count: 0 },
-      { range: '601-700', count: 0 },
-      { range: '701-800', count: 0 },
-      { range: '801-900', count: 0 },
-      { range: '901-above', count: 0 }
-    ];
-
-    transactions.forEach(transaction => {
-      if (transaction.price <= 100) priceRanges[0].count++;
-      else if (transaction.price <= 200) priceRanges[1].count++;
-      else if (transaction.price <= 300) priceRanges[2].count++;
-      else if (transaction.price <= 400) priceRanges[3].count++;
-      else if (transaction.price <= 500) priceRanges[4].count++;
-      else if (transaction.price <= 600) priceRanges[5].count++;
-      else if (transaction.price <= 700) priceRanges[6].count++;
-      else if (transaction.price <= 800) priceRanges[7].count++;
-      else if (transaction.price <= 900) priceRanges[8].count++;
-      else priceRanges[9].count++;
-    });
-
-    res.status(200).json(priceRanges);
+    // Format the response to match the required price ranges
+    const formattedResponse = priceRanges.reduce((acc, range) => {
+      const label = range._id === "901-above" ? "901-above" : `${range._id}-${range._id + 99}`;
+      acc[label] = range.count;
+      return acc;
+    }, {});
+     
+    return { status: 200, data: formattedResponse };
+    
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching bar chart data', error });
+    console.error('Error fetching bar chart data:', error); // Log error for debugging
+
+    return { status: 500, data: { message: 'Error fetching bar chart data', error: error.message } };
+    
   }
 };
 
 // Get pie chart data for a given month
 const getPieChartData = async (req, res) => {
   const { month } = req.query;
-  const monthIndex = new Date(`${month} 1, 2000`).getMonth(); // Convert month to index (0-11)
+
+  if (!month) {
+    return { status: 400, data: { message: 'Month parameter is required' } };
+  }
+
+  const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1; // Convert month to index (1-12)
 
   try {
-    const transactions = await Transaction.find({ dateOfSale: { $month: monthIndex + 1 } });
+    const transactions = await Transaction.find({
+      $expr: {
+        $eq: [{ $month: '$dateOfSale' }, monthIndex]
+      }
+    });
 
     const categoryCounts = transactions.reduce((acc, transaction) => {
       acc[transaction.category] = (acc[transaction.category] || 0) + 1;
@@ -119,9 +207,9 @@ const getPieChartData = async (req, res) => {
       count: categoryCounts[category]
     }));
 
-    res.status(200).json(pieChartData);
+    return { status: 200, data: pieChartData };
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching pie chart data', error });
+    return { status: 500, data: { message: 'Error fetching pie chart data', error: error.message } };
   }
 };
 
@@ -130,19 +218,26 @@ const getCombinedData = async (req, res) => {
   const { month } = req.query;
 
   try {
-    const transactions = await getTransactions({ query: { month } }, res, true);
-    const statistics = await getStatistics({ query: { month } }, res, true);
-    const barChartData = await getBarChartData({ query: { month } }, res, true);
-    const pieChartData = await getPieChartData({ query: { month } }, res, true);
+    const [statisticsRes, barChartDataRes, pieChartDataRes] = await Promise.all([
+      getStatistics({ query: { month } }),
+      getBarChartData({ query: { month } }),
+      getPieChartData({ query: { month } })
+    ]);
 
-    res.status(200).json({
-      transactions: transactions.data,
-      statistics: statistics.data,
-      barChartData: barChartData.data,
-      pieChartData: pieChartData.data
-    });
+    if (statisticsRes.status !== 200 || barChartDataRes.status !== 200 || pieChartDataRes.status !== 200) {
+      throw new Error('Error fetching data'); // Handle non-200 responses if needed
+    }
+
+    const responseData = {
+      statistics: statisticsRes.data,
+      barChartData: barChartDataRes.data,
+      pieChartData: pieChartDataRes.data
+    };
+
+    res.status(200).json(responseData);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching combined data', error });
+    console.error('Error fetching combined data:', error);
+    res.status(500).json({ message: 'Error fetching combined data', error: error.message });
   }
 };
 
