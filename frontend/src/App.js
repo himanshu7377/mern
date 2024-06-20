@@ -4,7 +4,7 @@ import TransactionsTable from './components/TransactionsTable';
 import StatisticsTable from './components/StatisticsTable';
 import BarChart from './components/BarChart';
 import PieChart from './components/PieChart';
-import CombinedChart from './components/combine';
+import CombinedChart from './components/Combine';
 function App() {
   const [month, setMonth] = useState('march');
   return (

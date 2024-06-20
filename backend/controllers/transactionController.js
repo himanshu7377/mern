@@ -1,7 +1,7 @@
 const axios = require('axios');
 const Transaction = require('../models/Transaction');
 
-// Initialize the database by fetching data from the third-party API and seeding the database
+
 const initializeDatabase = async (req, res) => {
   try {
     const response = await axios.get('https://s3.amazonaws.com/roxiler.com/product_transaction.json');
@@ -189,12 +189,12 @@ const getBarChartData = async (req, res) => {
 
     // console.log('Formatted response:', { labels, data });
     return { status: 200, data: { labels, data } };
-    // return res.status(200).json({ labels, data });
+   
   } catch (error) {
     console.error('Error fetching bar chart data:', error);
 
     return { status: 500, data: { message: 'Error fetching bar chart data', error: error.message } };
-    // return res.status(500).json({ message: 'Error fetching bar chart data', error: error.message });
+   
   }
 };
 
@@ -244,7 +244,7 @@ const getCombinedData = async (req, res) => {
     ]);
 
     if (statisticsRes.status !== 200 || barChartDataRes.status !== 200 || pieChartDataRes.status !== 200) {
-      throw new Error('Error fetching data'); // Handle non-200 responses if needed
+      throw new Error('Error fetching data'); 
     }
 
     const responseData = {
@@ -254,12 +254,12 @@ const getCombinedData = async (req, res) => {
     };
 
     return { status: 200, data: responseData };
-    // res.status(200).json(responseData);
+   
   } catch (error) {
     console.error('Error fetching combined data:', error);
 
     return { status: 500, data: { message: 'Error fetching combined data', error: error.message } };
-    // res.status(500).json({ message: 'Error fetching combined data', error: error.message });
+   
   }
 };
 

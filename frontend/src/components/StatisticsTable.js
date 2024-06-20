@@ -16,9 +16,9 @@ const StatisticsTable = ({ month }) => {
   const fetchStatistics = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/transactions/statistics', {
-        params: { month } // Ensure month is defined and passed correctly
+        params: { month } 
       });
-      setStatistics(response.data); // Assuming response.data contains statistics object
+      setStatistics(response.data); 
       // console.log('statistics', statistics)
     } catch (error) {
       console.error('Error fetching statistics:', error);
