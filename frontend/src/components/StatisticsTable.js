@@ -34,12 +34,15 @@ const StatisticsTable = ({ month }) => {
   return (
     <div className="statistics-table p-4 border rounded-md shadow-md bg-yellow-100 max-w-4xl mx-auto mt-8">
       <h2 className="text-2xl text-center font-bold mb-4">Statistics</h2>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="p-4 border rounded-md bg-yellow-200 text-center">
           <h3 className="text-lg font-semibold">Total Amount of Sale</h3>
           <p className="text-2xl">${statistics.totalSalesAmount}</p>
         </div>
-       
+        <div className="p-4 border rounded-md bg-yellow-200 text-center">
+          <h3 className="text-lg font-semibold">Total  Items</h3>
+          <p className="text-2xl">{statistics.totalItemsCount}</p>
+        </div>
         <div className="p-4 border rounded-md bg-yellow-200 text-center">
           <h3 className="text-lg font-semibold">Total Sold Items</h3>
           <p className="text-2xl">{statistics.soldItems}</p>

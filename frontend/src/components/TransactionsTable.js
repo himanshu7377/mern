@@ -102,6 +102,7 @@ const TransactionsTable = ({ month, setMonth }) => {
           onChange={handlePerPageChange}
           className="px-3 py-2 rounded-md border shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
+          
           <option value="5">5</option>
           <option value="10">10</option>
           <option value="20">20</option>

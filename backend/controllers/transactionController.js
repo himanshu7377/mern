@@ -48,17 +48,19 @@ const getTransactions = async (req, res) => {
         if (!isNaN(numericSearch)) {
           // If search term is a valid number, search by exact price or approximate price range
           query.$or = [
-            { title: { $regex: search, $options: 'i' } },
-            { description: { $regex: search, $options: 'i' } },
-            { price: numericSearch }
+              { title: { $regex: search, $options: 'i' } },
+              { description: { $regex: search, $options: 'i' } },
+              { price: numericSearch },
+              { price: { $gte: numericSearch - 10, $lte: numericSearch + 10 } } // Range condition for price
           ];
-        } else {
+      } else {
           // If search term is not a valid number, only search by title and description fields
           query.$or = [
-            { title: { $regex: search, $options: 'i' } },
-            { description: { $regex: search, $options: 'i' } }
+              { title: { $regex: search, $options: 'i' } },
+              { description: { $regex: search, $options: 'i' } }
           ];
-        }
+      }
+      
       }
       
       
@@ -140,7 +142,7 @@ const getBarChartData = async (req, res) => {
   const { month } = req.query;
 
   if (!month) {
-    return { status: 400, data: { message: 'Month parameter is required' } };
+    return res.status(400).json({ message: 'Month parameter is required' });
   }
 
   const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1; // Convert month to index (1-12)
@@ -166,22 +168,36 @@ const getBarChartData = async (req, res) => {
       }
     ]);
 
-    // Format the response to match the required price ranges
-    const formattedResponse = priceRanges.reduce((acc, range) => {
-      const label = range._id === "901-above" ? "901-above" : `${range._id}-${range._id + 99}`;
-      acc[label] = range.count;
-      return acc;
-    }, {});
-     
-    return { status: 200, data: formattedResponse };
-    
+    console.log('Price ranges:', JSON.stringify(priceRanges, null, 2));
+
+    // Define the labels and initialize the data array
+    const labels = ["0-100", "101-200", "201-300", "301-400", "401-500", "501-600", "601-700", "701-800", "801-900", "901-above"];
+    const data = new Array(labels.length).fill(0);
+
+    // Map the counts to the correct data index
+    priceRanges.forEach(range => {
+      let index;
+      if (range._id === "901-above") {
+        index = labels.length - 1;
+      } else {
+        index = Math.floor(range._id / 100);
+      }
+      if (index !== -1 && index < data.length) {
+        data[index] = range.count;
+      }
+    });
+
+    console.log('Formatted response:', { labels, data });
+    return { status: 200, data: { labels, data } };
+    // return res.status(200).json({ labels, data });
   } catch (error) {
-    console.error('Error fetching bar chart data:', error); // Log error for debugging
+    console.error('Error fetching bar chart data:', error);
 
     return { status: 500, data: { message: 'Error fetching bar chart data', error: error.message } };
-    
+    // return res.status(500).json({ message: 'Error fetching bar chart data', error: error.message });
   }
 };
+
 
 // Get pie chart data for a given month
 const getPieChartData = async (req, res) => {
