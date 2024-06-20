@@ -3,6 +3,7 @@ import './App.css';
 import TransactionsTable from './components/TransactionsTable';
 import StatisticsTable from './components/StatisticsTable';
 import BarChart from './components/BarChart';
+import PieChart from './components/PieChart';
 function App() {
   const [month, setMonth] = useState('march');
   return (
@@ -11,8 +12,8 @@ function App() {
      <TransactionsTable month={month} setMonth={setMonth} />
       <StatisticsTable month={month} />
       <BarChart month={month} />
-      {/* <PieChart month={month} />
-      <CombinedChart month={month} /> */}
+      <PieChart month={month} />
+      {/* <CombinedChart month={month} /> */}
     </div>
   );
 }

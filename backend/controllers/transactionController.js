@@ -168,7 +168,7 @@ const getBarChartData = async (req, res) => {
       }
     ]);
 
-    console.log('Price ranges:', JSON.stringify(priceRanges, null, 2));
+    // console.log('Price ranges:', JSON.stringify(priceRanges, null, 2));
 
     // Define the labels and initialize the data array
     const labels = ["0-100", "101-200", "201-300", "301-400", "401-500", "501-600", "601-700", "701-800", "801-900", "901-above"];
@@ -187,7 +187,7 @@ const getBarChartData = async (req, res) => {
       }
     });
 
-    console.log('Formatted response:', { labels, data });
+    // console.log('Formatted response:', { labels, data });
     return { status: 200, data: { labels, data } };
     // return res.status(200).json({ labels, data });
   } catch (error) {
@@ -225,7 +225,7 @@ const getPieChartData = async (req, res) => {
       category,
       count: categoryCounts[category]
     }));
-
+    console.log(pieChartData);
     return { status: 200, data: pieChartData };
   } catch (error) {
     return { status: 500, data: { message: 'Error fetching pie chart data', error: error.message } };

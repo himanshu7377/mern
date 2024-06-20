@@ -27,10 +27,10 @@ const BarChart = ({ month }) => {
   const fetchBarChartData = async (month) => {
     try {
       const response = await axios.get('http://localhost:5000/api/transactions/barchart', { params: { month } });
-      console.log(response.data);
+    //   console.log(response.data);
 
       const maxCount = Math.max(...response.data.data);
-
+        
       setChartData({
         labels: response.data.labels,
         datasets: [

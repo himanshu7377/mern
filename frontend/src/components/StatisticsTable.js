@@ -19,7 +19,7 @@ const StatisticsTable = ({ month }) => {
         params: { month } // Ensure month is defined and passed correctly
       });
       setStatistics(response.data); // Assuming response.data contains statistics object
-      console.log('statistics', statistics)
+      // console.log('statistics', statistics)
     } catch (error) {
       console.error('Error fetching statistics:', error);
     }

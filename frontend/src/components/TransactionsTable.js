@@ -62,7 +62,7 @@ const TransactionsTable = ({ month, setMonth }) => {
   const pages = [...Array(totalPages).keys()].map(i => i + 1);
 
   return (
-    <div className="transactions-table p-4 border rounded-md shadow-md bg-white max-w-4xl mx-auto">
+    <div className="transactions-table p-4 border mt-5 rounded-md shadow-md bg-white max-w-4xl mx-auto">
       <h2 className="text-xl font-bold mb-4">Transactions Table</h2>
 
       <div className="search-bar flex mb-4">
