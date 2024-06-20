@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const transactionController = require('../controllers/transactionController');
-const { getStatistics,getBarChartData,getPieChartData,getCombinedData } = require('../controllers/transactionController');
+const { getStatistics,getBarChartData,getPieChartData,getCombinedData,getTransactions,initializeDatabase } = require('../controllers/transactionController');
 // Initialize database route
 router.get('/initialize', transactionController.initializeDatabase);
 
@@ -18,7 +18,18 @@ router.get('/', transactionController.getTransactions);
 // router.get('/piechart', transactionController.getPieChartData);
 
 // Get combined data route
-router.get('/combine', transactionController.getCombinedData);
+// router.get('/combine', transactionController.getCombinedData);
+
+
+// router.get('/initialize', async (req, res) => {
+//   const result = await getTransactions(req);
+//   res.status(result.status).json(result.data);
+// });
+
+// router.get('/',async (req, res) => {
+//   const result = await getTransactions(req);
+//   res.status(result.status).json(result.data);
+// });
 
 router.get('/statistics', async (req, res) => {
   const result = await getStatistics(req);

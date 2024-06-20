@@ -1,7 +1,11 @@
 const express = require('express');
 const connectDB = require('./config/db');
+const cors = require('cors');
 const transactionRoutes = require('./routes/transactionRoutes');
 const app = express();
+
+// Enable CORS
+app.use(cors());
 
 // Load environment variables
 require('dotenv').config();

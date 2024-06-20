@@ -18,60 +18,63 @@ const initializeDatabase = async (req, res) => {
 
 // Get transactions with search and pagination
 const getTransactions = async (req, res) => {
-  const { month, page = 1, perPage = 10, search = '' } = req.query;
-
-  if (!month) {
-    return res.status(400).json({ message: 'Month parameter is required' });
-  }
-
-  const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1; // Convert month to index (1-12)
-
-  try {
-    let query = {
-      $expr: {
-        $eq: [{ $month: "$dateOfSale" }, monthIndex] // Match month regardless of year
-      }
-    };
-
-    if (search) {
-      const numericSearch = parseFloat(search); // Convert search term to float
-
-      if (!isNaN(numericSearch)) {
-        // If search term is a valid number, search by exact price or approximate price range
-        query.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          {
-            $expr: {
-              $and: [
-                { $gte: [{ $toDouble: "$price" }, numericSearch - 100] },
-                { $lte: [{ $toDouble: "$price" }, numericSearch + 100] }
-              ]
-            }
-          }
-        ];
-      } else {
-        // If search term is not a valid number, only search by title and description fields
-        query.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
-        ];
-      }
+    const { month, page , perPage , search = '' } = req.query;
+        console.log('page',page,'perpage',perPage,'search',search,'month',month)
+    if (!page || !perPage) {
+      return res.status(400).json({ message: 'Page and perPage parameters are required' });
     }
-
-    const transactions = await Transaction.find(query)
-      .skip((page - 1) * perPage)
-      .limit(parseInt(perPage));
-
-    const total = await Transaction.countDocuments(query);
-
-    res.status(200).json({ transactions, total });
-  } catch (error) {
-    console.error('Error fetching transactions:', error);
-    res.status(500).json({ message: 'Error fetching transactions', error: error.message });
-  }
-};
-
+  
+    if (!month) {
+      return res.status(400).json({ message: 'Month parameter is required' });
+    }
+  
+    const date = new Date(`${month} 1, 2000`);
+    if (isNaN(date.getTime())) {
+      return res.status(400).json({ message: 'Invalid month parameter' });
+    }
+    
+    const monthIndex = date.getMonth() + 1; // Convert month to index (1-12)
+  
+    try {
+      let query = {
+        $expr: {
+          $eq: [{ $month: '$dateOfSale' }, monthIndex] // Match month regardless of year
+        }
+      };
+  
+      if (search) {
+        const numericSearch = parseFloat(search); // Convert search term to float
+  
+        if (!isNaN(numericSearch)) {
+          // If search term is a valid number, search by exact price or approximate price range
+          query.$or = [
+            { title: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } },
+            { price: numericSearch }
+          ];
+        } else {
+          // If search term is not a valid number, only search by title and description fields
+          query.$or = [
+            { title: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+          ];
+        }
+      }
+      
+      
+      const transactions = await Transaction.find(query)
+        .skip((parseInt(page) - 1) * parseInt(perPage))
+        .limit(parseInt(perPage));
+  
+      const total = await Transaction.countDocuments(query);
+  
+      res.status(200).json({ transactions, total });
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      res.status(500).json({ message: 'Error fetching transactions', error: error.message });
+    }
+  };
+  
 // Get statistics for a given month
 const getStatistics = async (req) => {
     const { month } = req.query;
