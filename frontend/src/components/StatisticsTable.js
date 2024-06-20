@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const StatisticsTable = ({ month }) => {
 
-    console.log('month', month)
+    // console.log('month', month)
   const [statistics, setStatistics] = useState({
     totalSalesAmount: 0,
     soldItems: 0,

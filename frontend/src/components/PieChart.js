@@ -21,7 +21,7 @@ const PieChart = ({ month }) => {
   const fetchPieChartData = async (month) => {
     try {
       const response = await axios.get('http://localhost:5000/api/transactions/piechart', { params: { month } });
-      console.log(response.data);
+      // console.log(response.data);
   
       const transformedData = response.data.map(item => ({
         label: item.category,  // Use category as label

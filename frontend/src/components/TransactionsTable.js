@@ -62,7 +62,7 @@ const TransactionsTable = ({ month, setMonth }) => {
   const pages = [...Array(totalPages).keys()].map(i => i + 1);
 
   return (
-    <div className="transactions-table p-4 border mt-5 rounded-md shadow-md bg-white max-w-4xl mx-auto">
+    <div className="transactions-table p-4  text-center border mt-5 rounded-md shadow-md bg-white max-w-4xl mx-auto">
       <h2 className="text-xl font-bold mb-4">Transactions Table</h2>
 
       <div className="search-bar flex mb-4">
@@ -119,16 +119,17 @@ const TransactionsTable = ({ month, setMonth }) => {
             <th className="px-3 py-2 border border-gray-300">Price</th>
           </tr>
         </thead>
-        <tbody>
-          {transactions.map((transaction) => (
-            <tr key={transaction.id} className="border-b border-gray-300 hover:bg-gray-100">
-              <td className="px-3 py-2">{transaction.id}</td>
-              <td className="px-3 py-2">{transaction.title}</td>
-              <td className="px-3 py-2">{transaction.description}</td>
-              <td className="px-3 py-2">{transaction.price}</td>
-            </tr>
-          ))}
-        </tbody>
+        <tbody className="text-center align-middle">
+  {transactions.map((transaction) => (
+    <tr key={transaction.id} className="border-b border-gray-300">
+      <td className="px-3 py-2 border border-gray-400">{transaction.id}</td>
+      <td className="px-3 py-2 border border-gray-400">{transaction.title}</td>
+      <td className="px-3 py-2 border border-gray-400">{transaction.description}</td>
+      <td className="px-3 py-2 border border-gray-400">{transaction.price}</td>
+    </tr>
+  ))}
+</tbody>
+
       </table>
 
       <div className="pagination flex justify-between items-center mt-4">

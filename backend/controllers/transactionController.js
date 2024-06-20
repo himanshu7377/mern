@@ -225,7 +225,7 @@ const getPieChartData = async (req, res) => {
       category,
       count: categoryCounts[category]
     }));
-    console.log(pieChartData);
+    // console.log(pieChartData);
     return { status: 200, data: pieChartData };
   } catch (error) {
     return { status: 500, data: { message: 'Error fetching pie chart data', error: error.message } };
@@ -253,10 +253,13 @@ const getCombinedData = async (req, res) => {
       pieChartData: pieChartDataRes.data
     };
 
-    res.status(200).json(responseData);
+    return { status: 200, data: responseData };
+    // res.status(200).json(responseData);
   } catch (error) {
     console.error('Error fetching combined data:', error);
-    res.status(500).json({ message: 'Error fetching combined data', error: error.message });
+
+    return { status: 500, data: { message: 'Error fetching combined data', error: error.message } };
+    // res.status(500).json({ message: 'Error fetching combined data', error: error.message });
   }
 };
 
